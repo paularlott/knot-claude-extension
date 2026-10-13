@@ -1,0 +1,90 @@
+version: "3"
+
+vars:
+  VERSION:
+    sh: node -p "require('./package.json').version"
+  PACKAGE: dist/knot-claude-extension-{{.VERSION}}.mcpb
+  MCPB: npx --no-install mcpb
+
+tasks:
+  default:
+    desc: Build, test and pack the extension
+    cmds:
+      - task: pack
+
+  install:
+    desc: Install dependencies from package-lock.json
+    run: once
+    cmds:
+      - npm ci --no-audit --no-fund
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules/.package-lock.json
+
+  build:
+    desc: Bundle the relay and stage the extension in build/
+    deps: [install]
+    cmds:
+      - npm run build
+    sources:
+      - src/**/*.js
+      - scripts/build.mjs
+      - manifest.json
+      - assets/*
+      - LICENSE.txt
+      - package.json
+    generates:
+      - build/**/*
+
+  test:
+    desc: Run the unit tests
+    deps: [install]
+    cmds:
+      - npm test
+
+  pack:
+    desc: Validate and pack the extension into dist/ as a .mcpb file
+    deps: [build, test]
+    cmds:
+      - mkdir -p dist
+      - "{{.MCPB}} validate build/manifest.json"
+      - "{{.MCPB}} pack build {{.PACKAGE}}"
+    sources:
+      - build/**/*
+    generates:
+      - "{{.PACKAGE}}"
+
+  version:
+    desc: "Set the version in package.json and manifest.json, e.g. task version -- 0.2.0"
+    cmds:
+      - node scripts/version.mjs {{.CLI_ARGS}}
+
+  release:
+    desc: Tag v<version> from package.json, push the tag, and publish the .mcpb on the GitHub release
+    preconditions:
+      - sh: command -v gh >/dev/null
+        msg: "gh (GitHub CLI) is required"
+      - sh: test -z "$(git status --porcelain)"
+        msg: "the working tree has uncommitted changes"
+    cmds:
+      - |
+        if git rev-parse -q --verify "refs/tags/v{{.VERSION}}" >/dev/null; then
+          echo "Tag v{{.VERSION}} already exists, skipping tag creation"
+        else
+          git tag -a v{{.VERSION}} -m "Release {{.VERSION}}"
+        fi
+      - git push origin v{{.VERSION}}
+      - task: pack
+      - |
+        if gh release view v{{.VERSION}} >/dev/null 2>&1; then
+          gh release upload v{{.VERSION}} {{.PACKAGE}} --clobber
+        else
+          gh release create v{{.VERSION}} {{.PACKAGE}} -t "Release {{.VERSION}}" -n "knot Claude extension {{.VERSION}}"
+        fi
+
+  clean:
+    desc: Remove build output
+    cmds:
+      - rm -rf build dist

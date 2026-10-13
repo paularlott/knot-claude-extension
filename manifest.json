@@ -1,0 +1,76 @@
+{
+  "manifest_version": "0.3",
+  "name": "knot",
+  "display_name": "knot",
+  "version": "0.1.1",
+  "description": "Manage knot spaces, templates, stacks and pools, and work with files and commands inside your spaces.",
+  "long_description": "Connects Claude to your knot server, including one on a private network: the extension runs on your computer and uses the connection set up with knot connect, or a server URL and API token you enter in its settings. Claude gets knot's tools, with the same access as the API token.",
+  "author": {
+    "name": "Paul Arlott",
+    "url": "https://getknot.dev"
+  },
+  "homepage": "https://getknot.dev",
+  "documentation": "https://getknot.dev/docs/ai/mcp/#claude",
+  "support": "https://github.com/paularlott/knot-claude-extension/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paularlott/knot-claude-extension.git"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "keywords": [
+    "knot",
+    "development environments",
+    "spaces",
+    "devops"
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "user_config": {
+    "alias": {
+      "type": "string",
+      "title": "Connection alias",
+      "description": "The knot connect connection to use, by its alias in knot.toml. Leave as default for the default connection.",
+      "default": "default",
+      "required": false
+    },
+    "server_url": {
+      "type": "string",
+      "title": "Server URL",
+      "description": "Optional. Connect to this knot server instead of a knot connect connection; needs an API token too.",
+      "required": false
+    },
+    "api_token": {
+      "type": "string",
+      "title": "API token",
+      "description": "Optional. The API token to use with the server URL; a token with only the mcp scope is enough.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "KNOT_MCP_ALIAS": "${user_config.alias}",
+        "KNOT_SERVER": "${user_config.server_url}",
+        "KNOT_TOKEN": "${user_config.api_token}"
+      }
+    }
+  },
+  "tools_generated": true
+}

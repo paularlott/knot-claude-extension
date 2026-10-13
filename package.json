@@ -1,0 +1,28 @@
+{
+  "name": "knot-claude-extension",
+  "version": "0.1.1",
+  "description": "Claude Desktop extension that connects Claude to a knot server",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "Paul Arlott",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paularlott/knot-claude-extension.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "smol-toml": "1.9.0"
+  },
+  "devDependencies": {
+    "@anthropic-ai/mcpb": "2.1.2",
+    "esbuild": "0.28.2"
+  }
+}
