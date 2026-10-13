@@ -5,6 +5,7 @@
 import { build } from "esbuild";
 import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 
+// Task runs sync-version first, so package.json holds the version in VERSION.
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 
 rmSync("build", { recursive: true, force: true });
@@ -24,12 +25,6 @@ await build({
   banner: { js: 'import { createRequire } from "node:module"; const require = createRequire(import.meta.url);' },
 });
 
-// The manifest and package.json carry the same version; task version sets both.
-const manifest = JSON.parse(readFileSync("manifest.json", "utf8"));
-if (manifest.version !== pkg.version) {
-  console.error(`manifest.json version ${manifest.version} doesn't match package.json version ${pkg.version}; set both with: task version -- <version>`);
-  process.exit(1);
-}
 copyFileSync("manifest.json", "build/manifest.json");
 
 copyFileSync("assets/icon.png", "build/icon.png");

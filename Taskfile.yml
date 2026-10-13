@@ -2,7 +2,7 @@ version: "3"
 
 vars:
   VERSION:
-    sh: node -p "require('./package.json').version"
+    sh: cat VERSION
   PACKAGE: dist/knot-claude-extension-{{.VERSION}}.mcpb
   MCPB: npx --no-install mcpb
 
@@ -23,9 +23,19 @@ tasks:
     generates:
       - node_modules/.package-lock.json
 
+  sync-version:
+    desc: Copy the version in VERSION into package.json, package-lock.json and manifest.json
+    cmds:
+      - node scripts/sync-version.mjs
+    sources:
+      - VERSION
+      - package.json
+      - package-lock.json
+      - manifest.json
+
   build:
     desc: Bundle the relay and stage the extension in build/
-    deps: [install]
+    deps: [install, sync-version]
     cmds:
       - npm run build
     sources:
@@ -34,6 +44,7 @@ tasks:
       - manifest.json
       - assets/*
       - LICENSE.txt
+      - VERSION
       - package.json
     generates:
       - build/**/*
@@ -56,19 +67,20 @@ tasks:
     generates:
       - "{{.PACKAGE}}"
 
-  version:
-    desc: "Set the version in package.json and manifest.json, e.g. task version -- 0.2.0"
-    cmds:
-      - node scripts/version.mjs {{.CLI_ARGS}}
-
   release:
-    desc: Tag v<version> from package.json, push the tag, and publish the .mcpb on the GitHub release
+    desc: Tag v<version> from VERSION, push the tag, and publish the .mcpb on the GitHub release
     preconditions:
       - sh: command -v gh >/dev/null
         msg: "gh (GitHub CLI) is required"
       - sh: test -z "$(git status --porcelain)"
         msg: "the working tree has uncommitted changes"
     cmds:
+      - task: sync-version
+      - |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "VERSION wasn't synced into the other files; commit them, then release again" >&2
+          exit 1
+        fi
       - |
         if git rev-parse -q --verify "refs/tags/v{{.VERSION}}" >/dev/null; then
           echo "Tag v{{.VERSION}} already exists, skipping tag creation"

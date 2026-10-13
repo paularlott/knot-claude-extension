@@ -19,13 +19,6 @@ The extension's settings are all optional:
 
 The connection is read from `knot.toml` or `.knot.toml`, found in the same places as the `knot` command looks: the current directory, your home directory, `~/.knot/`, `~/.config/knot/` and `/etc/knot/`, or the file named by `KNOT_CONFIG`. Like the `knot` command, it accepts self-signed certificates unless `skip_verify = false` is set in the `[tls]` section of `knot.toml`.
 
-### macOS and servers on your local network
-
-Claude Desktop runs the extension inside its own process with its built-in Node.js, so on macOS it uses Claude's Local Network permission to reach a knot server on your local network. If the extension can't connect and Claude's logs show `EHOSTUNREACH`:
-
-- turn on **Claude** in **System Settings → Privacy & Security → Local Network**, then quit and reopen Claude
-- keep Claude's **Use built-in Node.js for MCP** setting on: Claude starts a Node.js installed in a folder you own, such as one from Homebrew or nvm, without its own Local Network permission, and it can't reach the local network
-
 ## Development
 
 Requires Node.js 18 or later and [Task](https://taskfile.dev).
@@ -35,11 +28,11 @@ Requires Node.js 18 or later and [Task](https://taskfile.dev).
 | `task build` | Bundle the relay and stage the extension in `build/` |
 | `task test` | Run the unit tests |
 | `task pack` | Build, test, validate and pack `dist/knot-claude-extension-<version>.mcpb` (the default task) |
-| `task release` | Tag `v<version>` from `package.json`, push the tag, and publish the `.mcpb` on the GitHub release |
-| `task version -- <version>` | Set the version in `package.json` and `manifest.json` |
+| `task release` | Tag `v<version>` from `VERSION`, push the tag, and publish the `.mcpb` on the GitHub release |
+| `task sync-version` | Copy the version in `VERSION` into `package.json`, `package-lock.json` and `manifest.json`; `task build` runs it too |
 | `task clean` | Remove `build/` and `dist/` |
 
-To release, run `task version -- <version>`, commit, then run `task release`.
+To release, set the new version in `VERSION`, run `task sync-version`, commit, then run `task release`.
 
 ## Contributing
 
